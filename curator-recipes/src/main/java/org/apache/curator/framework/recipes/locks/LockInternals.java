@@ -208,8 +208,8 @@ public class LockInternals
 
     String attemptLock(long time, TimeUnit unit, byte[] lockNodeBytes) throws Exception
     {
-        final long      startMillis = System.currentTimeMillis();
-        final Long      millisToWait = (unit != null) ? unit.toMillis(time) : null;
+        final long      startMillis = System.currentTimeMillis(); // 当前时间
+        final Long      millisToWait = (unit != null) ? unit.toMillis(time) : null; // 等待时间
         final byte[]    localLockNodeBytes = (revocable.get() != null) ? new byte[0] : lockNodeBytes;
         int             retryCount = 0;
 

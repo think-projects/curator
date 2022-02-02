@@ -336,23 +336,23 @@ public class CuratorFrameworkImpl implements CuratorFramework
     public void start()
     {
         log.info("Starting");
-        if ( !state.compareAndSet(CuratorFrameworkState.LATENT, CuratorFrameworkState.STARTED) )
+        if ( !state.compareAndSet(CuratorFrameworkState.LATENT, CuratorFrameworkState.STARTED) ) // CAS 启动
         {
             throw new IllegalStateException("Cannot be started more than once");
         }
 
         try
         {
-            connectionStateManager.start(); // ordering dependency - must be called before client.start()
-
+            connectionStateManager.start(); // ordering dependency - must be called before client.start() 启动链接
+            // 连击状态监听
             final ConnectionStateListener listener = new ConnectionStateListener()
             {
                 @Override
                 public void stateChanged(CuratorFramework client, ConnectionState newState)
                 {
-                    if ( ConnectionState.CONNECTED == newState || ConnectionState.RECONNECTED == newState )
+                    if ( ConnectionState.CONNECTED == newState || ConnectionState.RECONNECTED == newState ) // 链接或者重新链接
                     {
-                        logAsErrorConnectionErrors.set(true);
+                        logAsErrorConnectionErrors.set(true); // 清空错误
                     }
                 }
 
@@ -365,7 +365,7 @@ public class CuratorFrameworkImpl implements CuratorFramework
 
             this.getConnectionStateListenable().addListener(listener);
 
-            client.start();
+            client.start(); // 启动
 
             executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
             executorService.submit(new Callable<Object>()
@@ -396,14 +396,14 @@ public class CuratorFrameworkImpl implements CuratorFramework
     public void close()
     {
         log.debug("Closing");
-        if ( state.compareAndSet(CuratorFrameworkState.STARTED, CuratorFrameworkState.STOPPED) )
+        if ( state.compareAndSet(CuratorFrameworkState.STARTED, CuratorFrameworkState.STOPPED) ) // CAS
         {
             listeners.forEach(listener ->
-            {
+            {   // 关闭事件
                 CuratorEvent event = new CuratorEventImpl(CuratorFrameworkImpl.this, CuratorEventType.CLOSING, 0, null, null, null, null, null, null, null, null, null);
                 try
                 {
-                    listener.eventReceived(CuratorFrameworkImpl.this, event);
+                    listener.eventReceived(CuratorFrameworkImpl.this, event); // 触发关闭事件
                 }
                 catch ( Exception e )
                 {
@@ -414,10 +414,10 @@ public class CuratorFrameworkImpl implements CuratorFramework
 
             if ( executorService != null )
             {
-                executorService.shutdownNow();
+                executorService.shutdownNow(); // 关闭线程池
                 try
                 {
-                    executorService.awaitTermination(maxCloseWaitMs, TimeUnit.MILLISECONDS);
+                    executorService.awaitTermination(maxCloseWaitMs, TimeUnit.MILLISECONDS); // 等待线程池终止
                 }
                 catch ( InterruptedException e )
                 {
@@ -430,8 +430,8 @@ public class CuratorFrameworkImpl implements CuratorFramework
             {
                 ensembleTracker.close();
             }
-            listeners.clear();
-            unhandledErrorListeners.clear();
+            listeners.clear(); // 清理监听
+            unhandledErrorListeners.clear(); // 清理未检查异常监听
             connectionStateManager.close();
             client.close();
         }
